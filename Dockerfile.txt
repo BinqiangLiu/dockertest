@@ -1,0 +1,30 @@
+FROM ubuntu
+
+# Based on https://huggingface.co/spaces/radames/nginx-gradio-reverse-proxy/blob/main/Dockerfile
+USER root
+
+RUN apt-get -y update && apt-get -y install nginx
+RUN mkdir -p /var/cache/nginx \
+             /var/log/nginx \
+             /var/lib/nginx
+RUN touch /var/run/nginx.pid
+
+RUN chown -R 1000:1000 /var/cache/nginx \
+                       /var/log/nginx \
+                       /var/lib/nginx \
+                       /var/run/nginx.pid
+
+RUN useradd -m -u 1000 user
+
+USER user
+ENV HOME=/home/user
+
+RUN mkdir $HOME/app
+WORKDIR $HOME/app
+
+# Copy nginx configuration
+COPY --chown=user nginx.conf /etc/nginx/sites-available/default
+COPY --chown=user . .
+
+CMD ["bash", "run.sh"]
+
